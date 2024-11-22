@@ -1,15 +1,6 @@
-import { Text, View } from "react-native";
+import React from "react";
+import SignUpScreen from "./screens/SignUpScreen"; // SignUpScreen.js를 import
 
 export default function Index() {
-  return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-    </View>
-  );
+  return <SignUpScreen />; // SignUpScreen 컴포넌트를 렌더링
 }
