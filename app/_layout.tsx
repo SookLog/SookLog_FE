@@ -1,8 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Stack } from "expo-router";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Stack, useRouter } from "expo-router";
 
 export default function RootLayout() {
+  const router = useRouter(); // 라우팅을 위한 router 객체
+
   return (
     <View style={{ flex: 1 }}>
       <Stack
@@ -19,7 +21,7 @@ export default function RootLayout() {
       </Stack>
 
       {/* Footer: SignUpScreen에서는 제외 */}
-      <Footer />
+      <Footer router={router} />
     </View>
   );
 }
@@ -32,12 +34,24 @@ const Header = () => (
 );
 
 // Footer 컴포넌트
-const Footer = () => (
+const Footer = ({ router }) => (
   <View style={styles.footer}>
-    <Text style={styles.footerText}>🏠</Text>
-    <Text style={styles.footerText}>🔍</Text>
-    <Text style={styles.footerText}>✏️</Text>
-    <Text style={styles.footerText}>📅</Text>
+    {/* 홈 아이콘 */}
+    <TouchableOpacity onPress={() => router.push("/HomeScreen")}>
+      <Text style={styles.footerText}>🏠</Text>
+    </TouchableOpacity>
+    {/* 검색 아이콘 */}
+    <TouchableOpacity onPress={() => router.push("/SearchScreen")}>
+      <Text style={styles.footerText}>🔍</Text>
+    </TouchableOpacity>
+    {/* 작성 아이콘 */}
+    <TouchableOpacity onPress={() => router.push("/WriteScreen")}>
+      <Text style={styles.footerText}>✏️</Text>
+    </TouchableOpacity>
+    {/* 캘린더 아이콘 */}
+    <TouchableOpacity onPress={() => router.push("/CalendarScreen")}>
+      <Text style={styles.footerText}>📅</Text>
+    </TouchableOpacity>
   </View>
 );
 
@@ -69,4 +83,5 @@ const styles = StyleSheet.create({
     color: "#4D6F5A",
   },
 });
+
 

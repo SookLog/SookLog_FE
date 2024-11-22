@@ -1,7 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function SignUpScreen() {
+  const router = useRouter(); // Navigation을 위한 Router 객체
+
   return (
     <View style={styles.container}>
       {/* Title */}
@@ -11,7 +14,10 @@ export default function SignUpScreen() {
       <Text style={styles.subtitle}>나의 데일리 감정 일기</Text>
 
       {/* Kakao Login Button */}
-      <TouchableOpacity style={styles.kakaoButton}>
+      <TouchableOpacity
+        style={styles.kakaoButton}
+        onPress={() => router.push('/HomeScreen')} // 경로 수정
+      >
         <Image
           source={{ uri: 'https://developers.kakao.com/assets/img/about/logos/kakaotalk-sharing-btn-512x512.png' }}
           style={styles.kakaoIcon}
@@ -59,3 +65,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
