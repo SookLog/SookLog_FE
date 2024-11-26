@@ -1,65 +1,76 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Button, Alert } from "react-native";
-import * as Calendar from "expo-calendar";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Alert } from "react-native";
+import { Calendar } from "react-native-calendars";
 
-export default function CalendarScreen() {
-  const [events, setEvents] = useState([]);
-  const [permissionGranted, setPermissionGranted] = useState(false);
+export default function EmotionCalendar() {
+  // 감정 데이터를 저장할 상태
+  const [emotions, setEmotions] = useState({
+    "2023-12-01": { emoji: "😊", emotion: "행복" },
+    "2024-11-27": { emoji: "😊", emotion: "행복" },
+    "2023-12-02": { emoji: "😢", emotion: "슬픔" },
+    "2023-12-03": { emoji: "😡", emotion: "화남" },
+    "2023-12-04": { emoji: "😴", emotion: "피곤" },
+  });
 
-  useEffect(() => {
-    (async () => {
-      // 권한 요청
-      const { status } = await Calendar.requestCalendarPermissionsAsync();
-      if (status === "granted") {
-        setPermissionGranted(true);
-        fetchEvents(); // 이벤트 가져오기
-      } else {
-        Alert.alert("Permission Denied", "캘린더 접근 권한이 필요합니다.");
-      }
-    })();
-  }, []);
+  // 날짜를 렌더링하는 사용자 정의 컴포넌트
+  const renderDay = (day) => {
+    const date = day.dateString;
+    const emotion = emotions[date];
 
-  // 캘린더에서 이벤트 가져오기
-  const fetchEvents = async () => {
-    try {
-      const calendars = await Calendar.getCalendarsAsync();
-      if (calendars.length > 0) {
-        const defaultCalendar = calendars[0]; // 첫 번째 캘린더 선택
-        const now = new Date();
-        const events = await Calendar.getEventsAsync(
-          [defaultCalendar.id],
-          new Date(now.getFullYear(), now.getMonth(), 1), // 이번 달 첫째 날
-          new Date(now.getFullYear(), now.getMonth() + 1, 0) // 이번 달 마지막 날
-        );
-        setEvents(events);
-      } else {
-        Alert.alert("No Calendars Found", "캘린더를 찾을 수 없습니다.");
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "캘린더 데이터를 가져오는 중 문제가 발생했습니다.");
-    }
+    return (
+      <View
+        style={[
+          styles.dayContainer,
+          emotion && styles.markedDayContainer, // 감정 데이터가 있는 날짜에 스타일 추가
+        ]}
+      >
+        {/* 날짜 표시 */}
+        <Text
+          style={[
+            styles.dateText,
+            emotion && styles.markedDateText, // 감정 데이터가 있는 날짜에 텍스트 색상 추가
+          ]}
+        >
+          {day.day}
+        </Text>
+        {/* 감정 이모티콘 표시 */}
+        <Text style={styles.emoji}>{emotion ? emotion.emoji : ""}</Text>
+      </View>
+    );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Calendar Events</Text>
-      {permissionGranted ? (
-        <View style={styles.eventContainer}>
-          {events.length > 0 ? (
-            events.map((event) => (
-              <Text key={event.id} style={styles.eventText}>
-                {event.title} - {new Date(event.startDate).toDateString()}
-              </Text>
-            ))
-          ) : (
-            <Text style={styles.noEventText}>이번 달 일정이 없습니다.</Text>
-          )}
-        </View>
-      ) : (
-        <Text style={styles.permissionText}>캘린더 권한을 허용해주세요.</Text>
-      )}
-      <Button title="Reload Events" onPress={fetchEvents} />
+      {/* Header */}
+      <Text style={styles.title}>SookLog</Text>
+
+      {/* Calendar */}
+      <Calendar
+        markingType={"custom"} // 마킹 타입 활성화
+        dayComponent={({ date }) => renderDay(date)} // 날짜 렌더링
+        onDayPress={(day) => {
+          const selectedDate = day.dateString;
+          if (emotions[selectedDate]) {
+            Alert.alert(
+              `Emotion: ${emotions[selectedDate].emotion}`,
+              `Emoji: ${emotions[selectedDate].emoji}`
+            );
+          } else {
+            Alert.alert("일기 없음", "이날은 저장된 일기가 없습니다.");
+          }
+        }}
+        style={styles.calendar}
+        theme={{
+          calendarBackground: "#fff",
+          todayTextColor: "#4D6F5A",
+          dayTextColor: "#4D6F5A",
+          arrowColor: "#4D6F5A",
+          monthTextColor: "#4D6F5A",
+          textDayFontSize: 20, // 날짜 텍스트 크기
+          textMonthFontSize: 24, // 월 텍스트 크기
+          textDayHeaderFontSize: 16, // 요일 텍스트 크기
+        }}
+      />
     </View>
   );
 }
@@ -67,36 +78,46 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "#fff",
     padding: 16,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: "bold",
-    marginBottom: 16,
     color: "#398664",
-  },
-  eventContainer: {
-    flex: 1,
-    width: "100%",
-    paddingHorizontal: 16,
-  },
-  eventText: {
-    fontSize: 16,
-    color: "#2d4150",
-    marginVertical: 4,
-  },
-  noEventText: {
-    fontSize: 16,
-    color: "#888",
     textAlign: "center",
-    marginTop: 16,
+    marginBottom: 120,
   },
-  permissionText: {
+  calendar: {
+    width: "100%",
+    height: 400,
+    borderRadius: 10,
+  },
+  dayContainer: {
+    aspectRatio: 1, // 정사각형 비율 유지
+    width: "100%", // 화면 너비의 일정 비율 사용
+    justifyContent: "center",
+    alignItems: "center",
+    margin: 2,
+    backgroundColor: "#fff",
+    borderRadius: 5,
+  },
+  dateText: {
     fontSize: 16,
-    color: "#888",
-    marginBottom: 16,
+    color: "#4D6F5A",
+  },
+  emoji: {
+    fontSize: 20, // 이모티콘 크기
+    height: 24, // 이모티콘 높이 고정
+  },
+  // 감정 데이터가 있는 날짜의 커스텀 스타일
+  markedDayContainer: {
+    backgroundColor: "#236322", // 초록 배경
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  markedDateText: {
+    color: "#d5e3d9", // 하얀 텍스트 색상
   },
 });
