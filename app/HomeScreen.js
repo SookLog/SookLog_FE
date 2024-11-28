@@ -8,7 +8,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     // API 대신 Mock Data 사용
-    const mockPositiveCount = 22; // 임시 데이터: 긍정적인 날의 수
+    const mockPositiveCount = 1; // 임시 데이터: 긍정적인 날의 수
     setPositiveDays(mockPositiveCount); // 임시 데이터를 상태로 설정
   }, []); // 컴포넌트 로드 시 한 번 실행
 
