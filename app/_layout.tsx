@@ -39,6 +39,10 @@ const Footer = ({ router }: { router: any }) => (
     <TouchableOpacity onPress={() => router.push("/CalendarScreen")}>
       <Text style={styles.footerText}>📅</Text>
     </TouchableOpacity>
+     {/* 짤 아이콘 */}
+     <TouchableOpacity onPress={() => router.push("/Meme")}>
+      <Text style={styles.footerText}>❔</Text>
+    </TouchableOpacity>
   </View>
 );
 
