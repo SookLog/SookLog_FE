@@ -1,7 +1,33 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 
 export default function SearchScreen() {
+  const [question, setQuestion] = useState(""); // 질문 상태
+  const [isLoading, setIsLoading] = useState(true); // 로딩 상태
+
+  // API 호출 함수
+  const fetchQuestion = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("http://43.203.46.58:8080/api/questions/random"); // API 호출
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setQuestion(result.result); // API 응답의 result 값을 설정
+    } catch (error) {
+      console.error("Error fetching question:", error);
+      setQuestion("Q. 질문을 불러오는 데 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 API 호출
+  useEffect(() => {
+    fetchQuestion();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Title */}
@@ -10,14 +36,22 @@ export default function SearchScreen() {
       {/* Recommendation Section */}
       <View style={styles.recommendationSection}>
         <Text style={styles.recommendationTitle}>오늘의 추천 일기</Text>
+
+        {/* 질문 표시 */}
         <View style={styles.questionBox}>
-          <Text style={styles.questionText}>Q. 가장 기억에 남았던 일이 있나요?</Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#398664" />
+          ) : (
+            <Text style={styles.questionText}>{`Q. ${question}`}</Text>
+          )}
         </View>
+
+        {/* 버튼 */}
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.actionButton}>
             <Text style={styles.actionText}>이 주제로 일기 쓰러 가기</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={fetchQuestion}>
             <Text style={styles.actionText}>주제 다시 정하기</Text>
           </TouchableOpacity>
         </View>
