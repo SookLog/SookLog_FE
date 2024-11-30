@@ -1,39 +1,81 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 export default function EmotionCalendar() {
-  // 감정 데이터를 저장할 상태
-  const [emotions, setEmotions] = useState({
-    "2023-12-01": { emoji: "😊", emotion: "행복" },
-    "2024-11-27": { emoji: "😊", emotion: "행복" },
-    "2023-12-02": { emoji: "😢", emotion: "슬픔" },
-    "2023-12-03": { emoji: "😡", emotion: "화남" },
-    "2023-12-04": { emoji: "😴", emotion: "피곤" },
+  const [emotions, setEmotions] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1,
   });
 
-  // 날짜를 렌더링하는 사용자 정의 컴포넌트
+  const getEmotionEmoji = (feeling) => {
+    const emotionMap = {
+      neutral: "😐",
+      sadness: "😢",
+      anger: "😡",
+      anxiety: "😟",
+      happy: "😊",
+      surprise: "😳",
+      disgust: "🤢",
+    };
+
+    return emotionMap[feeling] || "";
+  };
+
+  const fetchEmotions = async (year, month) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `http://43.203.46.58:8080/api/diaries/monthly-feelings?year=${year}&month=${month}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch emotions");
+      }
+
+      const result = await response.json();
+      const fetchedEmotions = {};
+
+      result.result.forEach((item) => {
+        fetchedEmotions[item.date] = {
+          emoji: getEmotionEmoji(item.feeling),
+          emotion: item.feeling,
+        };
+      });
+
+      setEmotions((prev) => ({ ...prev, ...fetchedEmotions }));
+    } catch (error) {
+      console.error("Error fetching emotions:", error);
+      Alert.alert("Error", "Failed to load emotions. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmotions(selectedDate.year, selectedDate.month);
+  }, [selectedDate]);
+
   const renderDay = (day) => {
-    const date = day.dateString;
-    const emotion = emotions[date];
+    const { dateString, day: dayNumber } = day;
+    const emotion = emotions[dateString];
 
     return (
       <View
         style={[
           styles.dayContainer,
-          emotion && styles.markedDayContainer, // 감정 데이터가 있는 날짜에 스타일 추가
+          emotion && styles.markedDayContainer,
         ]}
       >
-        {/* 날짜 표시 */}
         <Text
           style={[
             styles.dateText,
-            emotion && styles.markedDateText, // 감정 데이터가 있는 날짜에 텍스트 색상 추가
+            emotion && styles.markedDateText,
           ]}
         >
-          {day.day}
+          {dayNumber}
         </Text>
-        {/* 감정 이모티콘 표시 */}
         <Text style={styles.emoji}>{emotion ? emotion.emoji : ""}</Text>
       </View>
     );
@@ -41,36 +83,44 @@ export default function EmotionCalendar() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <Text style={styles.title}>SookLog</Text>
-
-      {/* Calendar */}
-      <Calendar
-        markingType={"custom"} // 마킹 타입 활성화
-        dayComponent={({ date }) => renderDay(date)} // 날짜 렌더링
-        onDayPress={(day) => {
-          const selectedDate = day.dateString;
-          if (emotions[selectedDate]) {
-            Alert.alert(
-              `Emotion: ${emotions[selectedDate].emotion}`,
-              `Emoji: ${emotions[selectedDate].emoji}`
-            );
-          } else {
-            Alert.alert("일기 없음", "이날은 저장된 일기가 없습니다.");
-          }
-        }}
-        style={styles.calendar}
-        theme={{
-          calendarBackground: "#fff",
-          todayTextColor: "#4D6F5A",
-          dayTextColor: "#4D6F5A",
-          arrowColor: "#4D6F5A",
-          monthTextColor: "#4D6F5A",
-          textDayFontSize: 20, // 날짜 텍스트 크기
-          textMonthFontSize: 24, // 월 텍스트 크기
-          textDayHeaderFontSize: 16, // 요일 텍스트 크기
-        }}
-      />
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#398664" />
+      ) : (
+        <Calendar
+          current={`${selectedDate.year}-${selectedDate.month
+            .toString()
+            .padStart(2, "0")}-01`}
+          markingType={"custom"}
+          dayComponent={({ date }) => renderDay(date)}
+          onDayPress={(day) => {
+            const selectedDate = day.dateString;
+            if (emotions[selectedDate]) {
+              Alert.alert(
+                `Emotion: ${emotions[selectedDate].emotion}`,
+                `Emoji: ${emotions[selectedDate].emoji}`
+              );
+            } else {
+              Alert.alert("일기 없음", "이날은 저장된 일기가 없습니다.");
+            }
+          }}
+          onMonthChange={(month) => {
+            console.log("Selected month:", month);
+            setSelectedDate({ year: month.year, month: month.month });
+          }}
+          style={styles.calendar}
+          theme={{
+            calendarBackground: "#fff",
+            todayTextColor: "#4D6F5A",
+            dayTextColor: "#4D6F5A",
+            arrowColor: "#4D6F5A",
+            monthTextColor: "#4D6F5A",
+            textDayFontSize: 20,
+            textMonthFontSize: 24,
+            textDayHeaderFontSize: 16,
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -94,8 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   dayContainer: {
-    aspectRatio: 1, // 정사각형 비율 유지
-    width: "100%", // 화면 너비의 일정 비율 사용
+    aspectRatio: 1,
     justifyContent: "center",
     alignItems: "center",
     margin: 2,
@@ -107,17 +156,16 @@ const styles = StyleSheet.create({
     color: "#4D6F5A",
   },
   emoji: {
-    fontSize: 20, // 이모티콘 크기
-    height: 24, // 이모티콘 높이 고정
+    fontSize: 20,
+    height: 24,
   },
-  // 감정 데이터가 있는 날짜의 커스텀 스타일
   markedDayContainer: {
-    backgroundColor: "#236322", // 초록 배경
+    backgroundColor: "#236322",
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
   },
   markedDateText: {
-    color: "#d5e3d9", // 하얀 텍스트 색상
+    color: "#d5e3d9",
   },
 });
