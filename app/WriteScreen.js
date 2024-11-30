@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,74 +10,13 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // AsyncStorage 추가
 import { useRouter } from "expo-router";
 
 export default function WriteScreen() {
   const [title, setTitle] = useState("");
   const [diaryText, setDiaryText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [memberId, setMemberId] = useState(null); // memberId 상태 추가
   const router = useRouter();
-
-  // accessToken을 헤더에 추가하여 서버에 요청
-  const fetchMemberIdFromServer = async (accessToken) => {
-    try {
-      const response = await fetch("http://43.203.46.58:8080/test", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${accessToken}`, // Authorization 헤더 사용
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch memberId from server");
-      }
-
-      const result = await response.json();
-      const { memberId } = result;
-
-      if (!memberId) {
-        throw new Error("Server response missing memberId");
-      }
-
-      // AsyncStorage에 memberId 저장
-      await AsyncStorage.setItem("memberId", memberId);
-      setMemberId(memberId);
-      console.log("Fetched Member ID from server:", memberId);
-    } catch (error) {
-      console.error("Error fetching memberId from server:", error);
-      Alert.alert("Error", "Failed to retrieve Member ID. Please try again.");
-    }
-  };
-
-  // AsyncStorage에서 memberId 가져오기 또는 서버에서 로그인 처리
-  useEffect(() => {
-    const fetchMemberId = async () => {
-      try {
-        const storedMemberId = await AsyncStorage.getItem("memberId");
-        if (storedMemberId) {
-          setMemberId(storedMemberId);
-          console.log("Stored Member ID:", storedMemberId);
-        } else {
-          console.log("Member ID not found in AsyncStorage. Fetching from server...");
-
-          // 서버에서 accessToken 사용해 memberId 가져오기
-          const accessToken = await AsyncStorage.getItem("accessToken");
-          if (!accessToken) {
-            throw new Error("Access token not found. Please log in.");
-          }
-
-          await fetchMemberIdFromServer(accessToken);
-        }
-      } catch (error) {
-        console.error("Error fetching memberId:", error);
-        Alert.alert("Error", "Failed to retrieve Member ID. Please try again.");
-      }
-    };
-    fetchMemberId();
-  }, []);
 
   // 현재 날짜 가져오기
   const today = new Date();
@@ -92,17 +31,12 @@ export default function WriteScreen() {
       return;
     }
 
-    if (!memberId) {
-      Alert.alert("Error", "Member ID is missing. Please log in.");
-      return;
-    }
-
     setIsLoading(true);
 
     try {
       // API 호출
       const response = await fetch(
-        `http://43.203.46.58:8080/api/diaries?memberId=${memberId}`,
+        "http://43.203.46.58:8080/api/diaries?memberId=1",
         {
           method: "POST",
           headers: {
@@ -111,7 +45,7 @@ export default function WriteScreen() {
           body: JSON.stringify({
             title,
             content: diaryText,
-            weather: "sunny", // 임의로 설정 (필요 시 사용자 입력 추가 가능)
+            weather: "sunny", // 임의의 날씨
             dateTime: new Date().toISOString(), // ISO 형식의 현재 시간
           }),
         }
@@ -122,16 +56,17 @@ export default function WriteScreen() {
       }
 
       const result = await response.json();
+      const { feeling } = result.result; // 감정 분석 결과
+
       console.log("API response:", result);
 
       // 감정 분석 결과 화면으로 이동
-      const { emotion } = result; // API 응답에서 emotion 데이터 사용
       router.push(
         `/EmotionResultScreen?date=${formattedDate}&title=${encodeURIComponent(
           title
         )}&diaryText=${encodeURIComponent(
           diaryText
-        )}&emotion=${encodeURIComponent(emotion)}`
+        )}&emotion=${encodeURIComponent(feeling)}`
       );
     } catch (error) {
       console.error("Error submitting diary:", error);

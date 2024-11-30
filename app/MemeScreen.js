@@ -1,32 +1,49 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker"; // 날짜 선택용 패키지
 
 export default function MemeScreen() {
   const router = useRouter();
-  const { date: initialDate, emotion } = useLocalSearchParams(); // useLocalSearchParams 사용
+  const { date: initialDate } = useLocalSearchParams(); // 초기 날짜만 받음
 
   // 상태 관리
   const [selectedDate, setSelectedDate] = useState(new Date(initialDate || Date.now())); // 초기 날짜 설정
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  // 예시 감정별 짤 데이터
-  const memeData = {
-    happiness: "https://via.placeholder.com/300x300/FFD700/000000?text=Happy+Meme",
-    sadness: "https://via.placeholder.com/300x300/1E90FF/FFFFFF?text=Sad+Meme",
-    anger: "https://via.placeholder.com/300x300/FF4500/FFFFFF?text=Angry+Meme",
-    surprise: "https://via.placeholder.com/300x300/32CD32/FFFFFF?text=Surprised+Meme",
-    neutral: "https://via.placeholder.com/300x300/808080/FFFFFF?text=Neutral+Meme",
-  };
-
-  // 감정에 맞는 짤 URL 가져오기
-  const memeUrl = memeData[emotion] || memeData.neutral;
+  const [memeUrl, setMemeUrl] = useState(""); // 짤 URL
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태
+  const [showDatePicker, setShowDatePicker] = useState(false); // 날짜 선택기 표시 여부
 
   // 날짜 포맷팅 함수
   const formatDate = (date) => {
-    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   };
+
+  // API 호출 함수
+  const fetchMeme = async (date) => {
+    setIsLoading(true);
+    try {
+      const formattedDate = formatDate(date);
+      const response = await fetch(`http://43.203.46.58:8080/api/diaries/image?date=${formattedDate}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch meme");
+      }
+
+      const result = await response.json();
+      console.log("API response:", result);
+
+      setMemeUrl(result.result); // 짤 URL 업데이트
+    } catch (error) {
+      console.error("Error fetching meme:", error);
+      setMemeUrl(""); // 에러 시 기본값 설정
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 컴포넌트가 처음 렌더링될 때와 날짜가 변경될 때 API 호출
+  useEffect(() => {
+    fetchMeme(selectedDate);
+  }, [selectedDate]);
 
   return (
     <View style={styles.container}>
@@ -34,8 +51,15 @@ export default function MemeScreen() {
 
       <View style={styles.contentContainer}>
         <Text style={styles.text}>작성 날짜: {formatDate(selectedDate)}</Text>
-        <Text style={styles.text}>감정: {emotion || "Neutral"}</Text>
-        <Image source={{ uri: memeUrl }} style={styles.memeImage} />
+
+        {/* 로딩 상태 또는 이미지 */}
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#398664" />
+        ) : memeUrl ? (
+          <Image source={{ uri: memeUrl }} style={styles.memeImage} />
+        ) : (
+          <Text style={styles.text}>짤을 불러오는 데 실패했습니다.</Text>
+        )}
 
         {/* 날짜 선택 버튼 */}
         <TouchableOpacity
@@ -55,7 +79,7 @@ export default function MemeScreen() {
           onChange={(event, date) => {
             setShowDatePicker(false);
             if (date) {
-              setSelectedDate(date);
+              setSelectedDate(date); // 날짜 변경 시 상태 업데이트
             }
           }}
         />
