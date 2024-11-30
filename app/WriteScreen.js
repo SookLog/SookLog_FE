@@ -47,12 +47,12 @@ export default function WriteScreen() {
 
       // query로 데이터 전달
       router.push(
-        `/EmotionResultScreen?date=${formattedDate}&title=${encodeURIComponent(
-          title
-        )}&diaryText=${encodeURIComponent(diaryText)}&emotion=${encodeURIComponent(
-          "기쁨"
-        )}`
-      );
+  `/EmotionResultScreen?date=${formattedDate}&title=${encodeURIComponent(
+    title
+  )}&diaryText=${encodeURIComponent(diaryText)}&emotion=${encodeURIComponent(
+    "기쁨"
+  )}`
+);
     }, 3000);
   };
 
