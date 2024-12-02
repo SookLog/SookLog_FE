@@ -15,9 +15,9 @@ import { QuestionContext } from "./QuestionContext"; // Context 가져오기
 
 export default function WriteScreen() {
   const { question } = useContext(QuestionContext); // Context에서 question 가져오기
-  const [title, setTitle] = useState(question || ""); // Context에서 받은 question을 title 기본값으로 설정
-  const [diaryText, setDiaryText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [title, setTitle] = useState(question || ""); // 제목 상태
+  const [diaryText, setDiaryText] = useState(""); // 내용 상태
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태
   const router = useRouter();
 
   // 현재 날짜 가져오기
@@ -36,7 +36,6 @@ export default function WriteScreen() {
     setIsLoading(true);
 
     try {
-      // API 호출
       const response = await fetch(
         "http://43.203.46.58:8080/api/diaries?memberId=1",
         {
@@ -110,6 +109,13 @@ export default function WriteScreen() {
                 value={title}
                 onChangeText={setTitle}
               />
+              {/* 제목 삭제 버튼 */}
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => setTitle("")} // 제목 초기화
+              >
+                <Text style={styles.clearButtonText}>X</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.diaryContainer}>
               <TextInput
@@ -200,6 +206,20 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#000",
+  },
+  clearButton: {
+    marginLeft: 8,
+    backgroundColor: "#398664",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  clearButtonText: {
+    fontSize: 14,
+    color: "#fff",
+    fontWeight: "bold",
   },
   diaryContainer: {
     flex: 1,
