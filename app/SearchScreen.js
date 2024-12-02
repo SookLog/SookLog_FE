@@ -1,23 +1,34 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useContext } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { QuestionContext } from "./QuestionContext"; // Context 가져오기
+import { useRouter } from "expo-router";
 
 export default function SearchScreen() {
-  const [question, setQuestion] = useState(""); // 질문 상태
+  const { setQuestion } = useContext(QuestionContext); // Context의 setter 사용
+  const [question, setLocalQuestion] = useState(""); // 로컬 상태
   const [isLoading, setIsLoading] = useState(true); // 로딩 상태
+  const router = useRouter();
 
   // API 호출 함수
   const fetchQuestion = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://43.203.46.58:8080/api/questions/random"); // API 호출
+      const response = await fetch("http://43.203.46.58:8080/api/questions/random");
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error("HTTP error! status: " + response.status);
       }
       const result = await response.json();
-      setQuestion(result.result); // API 응답의 result 값을 설정
+      setLocalQuestion(result.result); // 로컬 상태에 저장
+      setQuestion(result.result); // Context에 저장
     } catch (error) {
       console.error("Error fetching question:", error);
-      setQuestion("Q. 질문을 불러오는 데 실패했습니다. 다시 시도해주세요.");
+      setLocalQuestion("Q. 질문을 불러오는 데 실패했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +59,10 @@ export default function SearchScreen() {
 
         {/* 버튼 */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push("WriteScreen")} // WriteScreen으로 이동
+          >
             <Text style={styles.actionText}>이 주제로 일기 쓰러 가기</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} onPress={fetchQuestion}>

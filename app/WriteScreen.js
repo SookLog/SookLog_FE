@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { QuestionContext } from "./QuestionContext"; // Context 가져오기
 
 export default function WriteScreen() {
-  const [title, setTitle] = useState("");
+  const { question } = useContext(QuestionContext); // Context에서 question 가져오기
+  const [title, setTitle] = useState(question || ""); // Context에서 받은 question을 title 기본값으로 설정
   const [diaryText, setDiaryText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -45,8 +47,8 @@ export default function WriteScreen() {
           body: JSON.stringify({
             title,
             content: diaryText,
-            weather: "sunny", // 임의의 날씨
-            dateTime: new Date().toISOString(), // ISO 형식의 현재 시간
+            weather: "sunny",
+            dateTime: new Date().toISOString(),
           }),
         }
       );
@@ -58,15 +60,12 @@ export default function WriteScreen() {
       const result = await response.json();
       const { feeling } = result.result; // 감정 분석 결과
 
-      console.log("API response:", result);
-
-      // 감정 분석 결과 화면으로 이동
       router.push(
         `/EmotionResultScreen?date=${formattedDate}&title=${encodeURIComponent(
           title
         )}&diaryText=${encodeURIComponent(
           diaryText
-        )}&emotion=${encodeURIComponent(feeling)}`
+        )}&emotion=${encodeURIComponent(feeling)}` // 결과 화면으로 이동
       );
     } catch (error) {
       console.error("Error submitting diary:", error);
