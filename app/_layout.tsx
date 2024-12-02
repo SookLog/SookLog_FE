@@ -1,11 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Stack, useRouter } from "expo-router";
-
+import { QuestionProvider } from "./QuestionContext"; 
 export default function RootLayout() {
   const router = useRouter(); // useRouter 사용
 
   return (
+    <QuestionProvider>
     <View style={{ flex: 1 }}>
       {/* Stack Navigation */}
       <Stack
@@ -17,7 +18,9 @@ export default function RootLayout() {
       {/* Footer */}
       <Footer router={router} />
     </View>
+    </QuestionProvider>
   );
+  
 }
 
 // Footer 컴포넌트
